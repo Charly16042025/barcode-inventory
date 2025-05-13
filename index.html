@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d6efd">
+
+  <title>Barcode Scanner Inventory</title>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 1em; }
+    video { width: 100%; max-width: 400px; }
+    .product { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
+    .product input { width: 50px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>Scan Product</h2>
+  <video id="preview"></video>
+
+  <h2>Scanned Products</h2>
+  <div id="productList"></div>
+
+  <button onclick="submitOrder()">Submit Order</button>
+
+  <script>
+    const productList = document.getElementById('productList');
+    const scannedItems = {};
+
+    function addProduct(code) {
+      if (scannedItems[code]) {
+        scannedItems[code].qty += 1;
+        document.getElementById(`qty-${code}`).value = scannedItems[code].qty;
+      } else {
+        scannedItems[code] = { code, qty: 1 };
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `
+          <span>${code}</span>
+          <input id="qty-${code}" type="number" min="1" value="1" onchange="updateQty('${code}', this.value)">
+        `;
+        productList.appendChild(div);
+      }
+    }
+
+    function updateQty(code, val) {
+      scannedItems[code].qty = parseInt(val);
+    }
+
+    function submitOrder() {
+      const order = Object.values(scannedItems);
+      console.log('Order:', order);
+      // TODO: Send to webhook with fetch()
+      alert('Order submitted!');
+    }
+
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    codeReader.decodeFromVideoDevice(null, 'preview', (result, err) => {
+      if (result) {
+        addProduct(result.text);
+      }
+    });
+	
+	if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(() => console.log('Service Worker Registered'));
+}
+
+  </script>
+</body>
+</html>
